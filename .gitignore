@@ -1,0 +1,22 @@
+# Secretos y configuración local — nunca deben subirse al repo
+.env
+
+# Base de datos local (SQLite) y logs generados en runtime
+data/*.db
+data/*.sqlite3
+logs/*.log
+
+# Entorno virtual de Python
+.venv/
+venv/
+
+# Cache y artefactos de Python
+__pycache__/
+*.pyc
+
+# Cache de pytest
+.pytest_cache/
+
+# Archivos de IDE
+.vscode/
+.idea/

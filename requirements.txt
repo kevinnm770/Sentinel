@@ -1,0 +1,31 @@
+# --- Discord ---
+# Librería principal para interactuar con la API de Discord: slash commands,
+# botones/menús/modales, eventos del servidor, etc.
+discord.py>=2.4,<3.0
+
+# --- Base de datos ---
+# ORM asíncrono: define los modelos (Coach, Sesión, etc.) y las queries
+# sin bloquear el loop de eventos del bot.
+SQLAlchemy>=2.0,<3.0
+# Driver asíncrono de SQLite, usado por SQLAlchemy para hablar con el archivo .db
+aiosqlite>=0.20,<1.0
+# Migraciones de esquema: permite versionar cambios a models.py sin perder datos
+alembic>=1.13,<2.0
+
+# --- Programación de tareas ---
+# Dispara recordatorios puntuales y eventos recurrentes (ej. "todos los lunes 17:00")
+APScheduler>=3.10,<4.0
+
+# --- Configuración ---
+# Lee y valida las variables de entorno (.env) con tipos, fallando rápido
+# si falta el token del bot o algo está mal escrito.
+pydantic-settings>=2.4,<3.0
+python-dotenv>=1.0,<2.0
+
+# --- Logging ---
+# Formatea los logs de consola de forma legible (colores, tracebacks claros)
+rich>=13.7,<14.0
+
+# --- Tests ---
+pytest>=8.0,<9.0
+pytest-asyncio>=0.24,<1.0
