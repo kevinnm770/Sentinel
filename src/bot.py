@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from config.settings import settings
+from services.scheduler_service import SchedulerService
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,8 @@ logger = logging.getLogger(__name__)
 EXTENSIONS = [
     "cogs.setup",
     "cogs.roster",
+    "cogs.training",
+    "cogs.reminder",
 ]
 
 
@@ -37,6 +40,7 @@ class SentinelBot(commands.Bot):
         # requieren habilitarlos a mano en el Developer Portal.
         intents = discord.Intents.default()
         super().__init__(command_prefix="!", intents=intents)
+        self.scheduler_service: SchedulerService | None = None
 
     async def setup_hook(self) -> None:
         # Comando de salud, útil para confirmar rápido que el bot está vivo
@@ -73,6 +77,17 @@ class SentinelBot(commands.Bot):
     async def on_ready(self) -> None:
         user = self.user
         logger.info("Conectado como %s (ID: %s)", user, user.id if user else "desconocido")
+
+        # on_ready puede dispararse más de una vez (ej. tras reconectar),
+        # así que solo arrancamos el scheduler la primera vez.
+        if self.scheduler_service is None:
+            self.scheduler_service = SchedulerService(self)
+            self.scheduler_service.start()
+
+    async def close(self) -> None:
+        if self.scheduler_service is not None:
+            self.scheduler_service.shutdown()
+        await super().close()
 
     @staticmethod
     async def _on_app_command_error(

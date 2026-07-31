@@ -18,7 +18,7 @@ class Base(DeclarativeBase):
     """
 
 
-def _resolve_database_url(url: str) -> str:
+def resolve_database_url(url: str) -> str:
     """Ancla las rutas relativas de SQLite a la raíz del proyecto.
 
     Sin esto, `sqlite+aiosqlite:///data/sentinel.db` crearía el archivo en
@@ -36,7 +36,7 @@ def _resolve_database_url(url: str) -> str:
     return url
 
 
-engine = create_async_engine(_resolve_database_url(settings.database_url))
+engine = create_async_engine(resolve_database_url(settings.database_url))
 
 # `expire_on_commit=False`: por defecto, SQLAlchemy invalida los objetos
 # después de un commit (hay que releerlos de la BD para usarlos de nuevo).
@@ -67,10 +67,11 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 async def init_db() -> None:
     """Crea las tablas que falten según los modelos definidos en models.py.
 
-    Sirve mientras el esquema todavía está tomando forma. Cuando lo
-    estabilicemos vamos a introducir Alembic, que versiona los cambios de
-    esquema sin borrar datos ya guardados (a diferencia de esto, que solo
-    sabe crear tablas nuevas, no modificar las existentes).
+    Sirve para el arranque en una instalación nueva (una base de datos
+    vacía). A partir de acá, los cambios al esquema de una base de datos ya
+    en uso se hacen con Alembic (`alembic upgrade head`, ver alembic/),
+    porque a diferencia de esto puede modificar tablas existentes sin
+    perder los datos que ya tienen.
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

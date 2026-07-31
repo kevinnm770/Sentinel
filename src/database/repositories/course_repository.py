@@ -18,6 +18,9 @@ class CourseRepository:
         await self._session.flush()
         return course
 
+    async def get_by_id(self, course_id: int) -> Course | None:
+        return await self._session.get(Course, course_id)
+
     async def get_by_name(self, name: str) -> Course | None:
         result = await self._session.execute(
             select(Course).where(func.lower(Course.name) == name.lower())

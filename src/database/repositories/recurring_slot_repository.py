@@ -22,6 +22,7 @@ class RecurringSlotRepository:
         start_time: time,
         duration_minutes: int,
         capacity: int = 1,
+        voice_channel_id: int | None = None,
     ) -> RecurringSlot:
         slot = RecurringSlot(
             coach_id=coach_id,
@@ -30,10 +31,24 @@ class RecurringSlotRepository:
             start_time=start_time,
             duration_minutes=duration_minutes,
             capacity=capacity,
+            voice_channel_id=voice_channel_id,
         )
         self._session.add(slot)
         await self._session.flush()
         return slot
+
+    async def get_by_id(self, slot_id: int) -> RecurringSlot | None:
+        # Con sesiones async, acceder a una relación no cargada (`slot.coach`)
+        # falla con MissingGreenlet incluso dentro de una sesión abierta: el
+        # lazy-load automático necesita hacer IO, y eso no está soportado de
+        # forma implícita en modo async. Por eso siempre pedimos `coach` y
+        # `course` con `selectinload`, no solo cuando la sesión ya se cerró.
+        result = await self._session.execute(
+            select(RecurringSlot)
+            .options(selectinload(RecurringSlot.coach), selectinload(RecurringSlot.course))
+            .where(RecurringSlot.id == slot_id)
+        )
+        return result.scalar_one_or_none()
 
     async def list_active(self) -> list[RecurringSlot]:
         # `selectinload` trae coach y course en la misma operación (2 queries

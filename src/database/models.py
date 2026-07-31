@@ -7,6 +7,7 @@ from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.database import Base
+from utils.time_utils import utc_now
 
 
 class SessionStatus(enum.Enum):
@@ -99,6 +100,11 @@ class RecurringSlot(Base):
     duration_minutes: Mapped[int]
     capacity: Mapped[int] = mapped_column(default=1)
 
+    # Canal de voz fijo (ya creado en el servidor) donde se conectan coach y
+    # estudiantes cada semana. Opcional porque una sesión puede coordinarse
+    # sin canal asignado (ej. por texto).
+    voice_channel_id: Mapped[int | None] = mapped_column(default=None)
+
     active: Mapped[bool] = mapped_column(default=True)
     valid_from: Mapped[datetime | None] = mapped_column(default=None)
     valid_until: Mapped[datetime | None] = mapped_column(default=None)
@@ -119,6 +125,14 @@ class Session(Base):
     """
 
     __tablename__ = "sessions"
+    __table_args__ = (
+        # Evita crear dos veces la sesión de "el próximo lunes 17hs" para el
+        # mismo horario recurrente si dos personas agendan casi al mismo
+        # tiempo (la segunda reutiliza la fila que ya existe).
+        UniqueConstraint(
+            "recurring_slot_id", "scheduled_at", name="uq_recurring_slot_occurrence"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     recurring_slot_id: Mapped[int | None] = mapped_column(
@@ -134,6 +148,10 @@ class Session(Base):
     capacity: Mapped[int] = mapped_column(default=1)
     status: Mapped[SessionStatus] = mapped_column(default=SessionStatus.SCHEDULED)
     announced_at: Mapped[datetime | None] = mapped_column(default=None)
+
+    # Se copia del RecurringSlot al generar la sesión, para que quede fijo
+    # aunque el horario recurrente cambie de canal después.
+    voice_channel_id: Mapped[int | None] = mapped_column(default=None)
 
     recurring_slot: Mapped[RecurringSlot | None] = relationship(back_populates="sessions")
     coach: Mapped["Coach"] = relationship(back_populates="sessions")
@@ -157,6 +175,6 @@ class Enrollment(Base):
     session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id"))
     student_discord_id: Mapped[int] = mapped_column(index=True)
     status: Mapped[EnrollmentStatus] = mapped_column(default=EnrollmentStatus.CONFIRMED)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(default=utc_now)
 
     session: Mapped["Session"] = relationship(back_populates="enrollments")

@@ -24,6 +24,9 @@ class CoachRepository:
         await self._session.flush()  # asigna el id sin cerrar la transacción todavía
         return coach
 
+    async def get_by_id(self, coach_id: int) -> Coach | None:
+        return await self._session.get(Coach, coach_id)
+
     async def get_by_discord_id(self, discord_user_id: int) -> Coach | None:
         result = await self._session.execute(
             select(Coach).where(Coach.discord_user_id == discord_user_id)

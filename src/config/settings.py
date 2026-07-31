@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     timezone: str = "America/Bogota"
     database_url: str = "sqlite+aiosqlite:///data/sentinel.db"
     log_level: str = "INFO"
+    # Con cuánta anticipación se avisa en el canal que una sesión está por
+    # empezar (y se abre el acceso al canal de voz).
+    announce_minutes_before: int = 10
 
 
 # Instancia única, creada al importar este módulo. El resto del proyecto
